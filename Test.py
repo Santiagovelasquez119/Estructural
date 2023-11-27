@@ -59,7 +59,7 @@ class Elemento():
                       [0, -12 * self.E * self.I / (self.l ** 3), -6 * self.E * self.I / (self.l ** 2), 0, 12 * self.E * self.I / (self.l ** 3), -6 * self.E * self.I / (self.l ** 2)],
                       [0, 6 * self.E * self.I / (self.l ** 2), 2 * self.E * self.I / self.l, 0, -6 * self.E * self.I / (self.l ** 2), 4 * self.E * self.I / self.l]])
         data = pd.DataFrame(Glob)
-        data.to_excel('KglobEl.xlsx')
+        #data.to_excel('KglobEl.xlsx')
         return Glob
 
 class AnalisisMatricial():
@@ -75,29 +75,16 @@ class AnalisisMatricial():
         self.pi = np.array(self.Matriz_Pi())
         self.armad = self.Armadura()
         self.Kglob = self.MatrizRigidezGlobal()
-        self.norest_vecf = self.VecFuerzas_NoRest()
-        self.rest_vecf = self.VecFuerzasRest()
-        [self.k11, self.k12, self.k21, self.k22] = self.MatrizRigidezGlobParcial()
-        self.deformacion = self.deflexion()
-        self.reaccion = self.reacciones()
 
-    def __str__(self):
-        print(f'# elementos: {self.nE}')
-        print(f'# nodos: {self.nN}')
-        print(f'# grados de libertad: {self.nG1}')
-        print(f'Vector coordenadas globales: {self.nr, self.nkf, self.N} ')
-        print(f'Matriz pi: {self.pi}')
-        print('Elemento 3:', self.armad[2])
-        print('KGlobal: ', self.Kglob)
-        print('K11: ', self.k11)
-        print('K12: ', self.k12)
-        print('K21: ', self.k21)
-        print('K22: ', self.k22)
-        print('Vector de Fuerzas Restringidas:', self.rest_vecf)
-        print(f'Vector de Fuerzas no restringidas: {self.norest_vecf}')
-        print(f'Deformaciones: {self.deformacion}')
-        print(f'Reacciones: {self.reaccion}')
-        return ''
+    # def __str__(self):
+    #     print(f'# elementos: {self.nE}')
+    #     print(f'# nodos: {self.nN}')
+    #     print(f'# grados de libertad: {self.nG1}')
+    #     print(f'Vector coordenadas globales: {self.nr, self.nkf, self.N} ')
+    #     print(f'Matriz pi: {self.pi}')
+    #     print('Elemento 3:', self.armad[2])
+    #     print('KGlobal: ', self.Kglob)
+    #     return ''
 
     def VectorCoordenadasGlobales(self):
         dicnodos = {}
@@ -165,147 +152,12 @@ class AnalisisMatricial():
                 for j in range(6):
                     a = self.pi[e, i]-1
                     b = self.pi[e, j]-1
+                    c = self.pi[e,]
+                    print(a,b)
                     k[a, b] = ke_global[i,j] + k[a, b]
         data = pd.DataFrame(k)
         data.to_excel('KGlob.xlsx')
         return k
-
-    def MatrizRigidezGlobParcial(self):
-        k11 = self.Kglob[0:self.nkf, 0:self.nkf]
-        k12 = self.Kglob[0:self.nkf, self.nkf:self.nG1]
-        k21 = self.Kglob[self.nkf:self.nG1, 0:self.nkf]
-        k22 = self.Kglob[self.nkf:self.nG1, self.nkf:self.nG1]
-        m1 = pd.DataFrame(k11)
-        m1.to_excel('k11.xlsx')
-        m2 = pd.DataFrame(k12)
-        m2.to_excel('K12.xlsx')
-        m3 = pd.DataFrame(k21)
-        m3.to_excel('K21.xlsx')
-        m4 = pd.DataFrame(k22)
-        m3.to_excel('K22.xlsx')
-        return k11, k12, k21, k22
-
-    def VecFuerzas_NoRest(self):
-        k = np.array([[0],
-                      [-10],
-                      [4],
-                      [21.736],
-                      [-8.917],
-                      [29.777],
-                      [-36.936],
-                      [-68.983],
-                      [94.369],
-                      [-21.9998],
-                      [-38.4996],
-                      [-70.417],
-                      [0]])
-        return k
-
-    def VecFuerzasRest(self):
-        k = np.array([[-6.6],
-                      [-19.5],
-                      [0],
-                      [0],
-                      [13.2]])
-        return k
-
-    def deflexion(self):
-        d = np.array(np.matmul(self.k11, self.norest_vecf))
-        deform = pd.DataFrame(d)
-        deform.to_excel('deformacion.xlsx')
-        return d
-
-    def reacciones(self):
-        d = np.array(np.matmul(self.k21 ,self.deformacion))
-        R = d-self.rest_vecf
-        return R
-
-def Graficar(tbl_Nodos:list, tbl_Elementos:list):
-    import matplotlib.pyplot as plt
-    import matplotlib.patches as ptch
-    def apoyo_rigido(x1: float, y1: float, B: float):
-        import matplotlib.pyplot as plt
-        #plt.figure()
-        plt.plot(B * np.array([0, 1]) + x1, B * np.array([0, 0]) + y1, color='k')
-        plt.plot(B * np.array([0, 0.5]) + x1, B * np.array([0, 1]) + y1, color='k')
-        plt.plot(B * np.array([0.5, 1]) + x1, B * np.array([1, 0]) + y1, color='k')
-        plt.plot(B * np.array([-0.1, 1.1]) + x1, B * np.array([0, 0]) + y1, color='k')
-        for i in range(11):
-            plt.plot(B * np.array([0.0 + 0.1 * i, -0.1 + 0.1 * i])+x1, B * np.array([0, -0.16])+y1, color='k')
-
-    def apoyo_empotrado(x1, y1, B):
-        import matplotlib.pyplot as plt
-        #plt.figure()
-        plt.plot(B * np.array([-1, 1.1]) + x1, B * np.array([-2, -2]) + y1, color='k')
-        for i in range(22):
-            plt.plot(B * np.array([-1.0 + 0.1 * i, -1.1 + 0.1 * i]) + x1, B * np.array([-2.5, -2.1]) + y1, color='k')
-
-    data1 = pd.DataFrame(tbl_Nodos)
-    data2 = pd.DataFrame(tbl_Elementos)
-    x = data1[1]
-    y = data1[2]
-    plt.figure()
-    plt.suptitle('Trabajo Final')
-    plt.title('Método de la rigidez')
-    plt.minorticks_on()
-    plt.grid(ls='-')
-    plt.xlabel('[m]')
-    plt.ylabel('[m]')
-    for e in data2.values:
-        ni, nf = e[4], e[5]
-        x1, y1 = 0, 0
-        x2, y2 = 0, 0
-        for i in data1.values:
-            nod = i[0]
-            if nod == ni:
-                x1, y1 =i[1], i[2]
-            if nod == nf:
-                x2, y2 = i[1], i[2]
-        plt.plot([x1,x2],[y1,y2], color='k', ls='-')
-
-    #Apoyo empotrado
-    apoyo_rigido(13.69,3.3, 0.7)
-
-    #Apoyo Empotrado
-    apoyo_empotrado(0,1,0.5)
-
-    style = "Simple, tail_width=0.5, head_width=4, head_length=5"
-    kw = dict(arrowstyle=style, color="r")
-    a3 = ptch.FancyArrowPatch((7.3,6.9), (6.8, 8.5),
-                                 connectionstyle="arc3,rad=-0.9", **kw)
-    a4 = ptch.FancyArrowPatch((0, 12.5), (0, 13.7),
-                              connectionstyle="arc3,rad=0.9", **kw)
-    plt.gca().add_patch(a3)
-    plt.gca().add_patch(a4)
-
-    plt.arrow(0,13, 0, -2, color='r', width=0.04)
-
-    plt.arrow(3.2, 14, -0.2, -0.8, color='r', width=0.05)
-    plt.arrow(11, 12, -0.9, -2.7, color='r', width=0.05)
-    plt.arrow(-0.5, 0.5, 0.3, -0.3, color='r', width=0.05)
-    plt.arrow(1.6, 7, 1.2, -0.85, color='r', width=0.05)
-
-    plt.plot([3.2,11],[14,12], color='r', ls='-')
-    plt.plot([-0.5,1.6], [0.5, 7], color='r', ls='-')
-
-    plt.text(-0.4, 13, '1', color='b')
-    plt.text(3+0.1, 6-0.5, '2', color='b')
-    plt.text(14+0.1, 4+0.1, '3', color='b')
-    plt.text(10-0.2, 9-0.7, '4', color='b')
-    plt.text(0.3, 0.1, '5', color='b')
-    plt.text(3-0.4, 13-0.5, '6', color='b')
-
-    plt.text(11.1, 12, '25 kN/m', size=8)
-    plt.text(3.2, 14.2, '5 kN/m', size=8)
-    plt.text(0,13.8, '4 kN*m', size=8)
-    plt.text(0.2, 11, '10 kN', size=8)
-    plt.text(1.1, 7.1, '10 kN/m', size=8)
-    plt.text(6.5, 8.6, '14 kN*m', size=8)
-    plt.text(-0.9, 0.6, '2 kN/m', size=8, rotation=70)
-    plt.show()
-
-#print(E1)
-
 
 I = (0.5**3)*0.3/12
 A= 0.5*0.3
@@ -336,6 +188,3 @@ tbl_Desp = [[0, 'N3', 'Dx'],
             [0, 'N5', 'Dy']]
 
 print(AnalisisMatricial(tbl_Elementos, tbl_Nodos, tbl_Frzas, tbl_Desp))
-Graficar(tbl_Nodos, tbl_Elementos)
-
-#print(l)
